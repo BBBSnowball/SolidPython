@@ -199,6 +199,19 @@ class openscad_object( object):
          
         self.modifier = string_vals.get(m.lower(), '')
         return self
+
+    @classmethod
+    # call to_openscad(), if it exists
+    # Another library can use this to interoperate
+    # with SolidPython, i.e. the user can put its
+    # objects into SolidPython and it will just work.
+    def _to_openscad(cls, x):
+        if hasattr(x, 'to_openscad'):
+            return x.to_openscad()
+        elif isinstance(x, list) or isinstance(x, tuple):
+            return map(cls._to_openscad, x)
+        else:
+            return x
     
     def _render(self):
         '''
@@ -227,6 +240,8 @@ class openscad_object( object):
             v = self.params[k]
             if v == None:
                 continue
+
+            v = self._to_openscad(v)
             
             if not first:
                 s += ", "
@@ -255,6 +270,7 @@ class openscad_object( object):
         if child is a list, assume its members are all openscad_objects and
         add them all to self.children
         '''
+        child = self._to_openscad(child)
         if isinstance( child, list) or isinstance( child, tuple):
             [self.add( c) for c in child]
         else:
